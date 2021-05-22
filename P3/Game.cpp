@@ -18,6 +18,8 @@
 #include <time.h>
 
 #include "Skybox.h"
+#include "boxLoader.h"
+#include "IETThread.h"
 
 using namespace std;
 using namespace glm;
@@ -26,7 +28,6 @@ using namespace glm;
 #define HEIGHT 768
 
 GLuint renderingProgram;
-GLuint shadowRenderingProgram;
 GLuint lakeRenderingProgram;
 
 vector<GLuint> VBO, VAO, EBO;//buffers for all objects
@@ -91,9 +92,11 @@ unsigned int depthMap;
 glm::vec3 lightPos(-200.0f, 200.0f, 200.0f);
 
 Skybox* skybox;
+loadWaiter* waiter;
 
 Game::Game()
 {
+	waiter = new loadWaiter();
 }
 
 Game::~Game()
@@ -146,8 +149,6 @@ void initializeObjectFromFile(string filePath, float r, float g, float b, vec3 p
 
 	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_vertex"));
 	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glEnableVertexAttribArray(glGetAttribLocation(shadowRenderingProgram, "v_vertex"));
-	glVertexAttribPointer(glGetAttribLocation(shadowRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &VBO[objectNumber]);
@@ -214,8 +215,6 @@ void initializeLake(string filePath, float r, float g, float b, vec3 position, f
 
 	glEnableVertexAttribArray(glGetAttribLocation(lakeRenderingProgram, "v_vertex"));
 	glVertexAttribPointer(glGetAttribLocation(lakeRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glEnableVertexAttribArray(glGetAttribLocation(shadowRenderingProgram, "v_vertex"));
-	glVertexAttribPointer(glGetAttribLocation(shadowRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &VBO[objectNumber]);
@@ -272,8 +271,6 @@ void initializeLoadedObject(vector<tinyobj::shape_t> shapes, float r, float g, f
 
 	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_vertex"));
 	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glEnableVertexAttribArray(glGetAttribLocation(shadowRenderingProgram, "v_vertex"));
-	glVertexAttribPointer(glGetAttribLocation(shadowRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &VBO[objectNumber]);
@@ -426,9 +423,8 @@ void drawObject(int index, GLuint program) {
 }
 
 void init(GLFWwindow* window) {
-	renderingProgram = createShaderProgram();
-	shadowRenderingProgram = createLightShaderProgram();
-	lakeRenderingProgram = createShadowlessShaderProgram();
+	renderingProgram = ShaderProgram::getInstance()->createShaderProgram();
+	lakeRenderingProgram = ShaderProgram::getInstance()->createShadowlessShaderProgram();
 	skybox = new Skybox();
 
 	glEnable(GL_DEPTH_TEST);
@@ -477,10 +473,6 @@ void init(GLFWwindow* window) {
 	glUniform1i(glGetUniformLocation(renderingProgram, "u_shadowMap"), 0);
 
 	skyboxStartIndex = VAO.size();
-	/*while (execTest1->loadedBox)
-	{
-		cout << "testing" << endl;
-	}*/
 	skybox->initialize(meshVertexCounts.size(), &VAO, &VBO, &EBO, &meshVertexCounts, &meshIndicesCount, &objectLocations, &objectRotations);
 
 	glUseProgram(lakeRenderingProgram);
@@ -499,43 +491,11 @@ void display(GLFWwindow* window, double currentTime) {
 	lightProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, near_plane, far_plane);
 	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 	lightSpaceMatrix = lightProjection * lightView;
-	glUseProgram(shadowRenderingProgram);
-	glUniformMatrix4fv(glGetUniformLocation(shadowRenderingProgram, "u_lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glActiveTexture(GL_TEXTURE0);
-	//generating shadows
-	{
-		glActiveTexture(GL_TEXTURE0);
-
-		glBindTexture(GL_TEXTURE_2D, texture[0]);
-		drawObject(poolStartIndex, shadowRenderingProgram);
-
-		glBindTexture(GL_TEXTURE_2D, texture[2]);
-		drawObject(houseStartIndex, shadowRenderingProgram);
-
-		glBindTexture(GL_TEXTURE_2D, texture[1]);
-		drawObject(groundStartIndex, shadowRenderingProgram);
-
-		for (int i = 0; i < treeCount; i++) {
-			glBindTexture(GL_TEXTURE_2D, texture[4]);//trunk
-			drawObject(i * 2 + treeStartIndex, shadowRenderingProgram);
-			glBindTexture(GL_TEXTURE_2D, texture[3]);//leaves
-			drawObject(i * 2 + 1 + treeStartIndex, shadowRenderingProgram);
-		}
-
-		glBindTexture(GL_TEXTURE_2D, texture[4]);
-		for (int i = 0; i < fallenTreeCount; i++) {
-			drawObject(i + fallenStartIndex, shadowRenderingProgram);
-		}
-
-		glBindTexture(GL_TEXTURE_2D, texture[1]);
-		for (int i = 0; i < grassCount; i++) {
-			drawObject(i + grassStartIndex, shadowRenderingProgram);
-		}
-	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -732,4 +692,10 @@ void Game::Run()
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
+}
+
+void loadWaiter::OnFinishedExecution()
+{
+	this->finishedLoading = true;
+	std::cout << "done" << std::endl;
 }
