@@ -16,6 +16,10 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
+//threading
+#include "ThreadPool.h"
+
+
 //for texture
 #include "imageloader.h"
 
