@@ -26,8 +26,7 @@ void Skybox::createShader()
 	skyboxRenderingProgram = ShaderProgram::getInstance()->createSkyboxShaderProgram();
 }
 
-void Skybox::initialize(int objectNumber, std::vector<GLuint>* VAO, std::vector<GLuint>* VBO, std::vector<GLuint>* EBO, std::vector<int>* meshVertexCounts,
-                        std::vector<int>* meshIndicesCount, std::vector<glm::vec3>* objectLocations, std::vector<float>* objectRotations)
+void Skybox::initialize()
 {
 	float skyboxVertices[] = {
 		// positions          
@@ -73,19 +72,20 @@ void Skybox::initialize(int objectNumber, std::vector<GLuint>* VAO, std::vector<
 		-1.0f, -1.0f,  1.0f,
 		 1.0f, -1.0f,  1.0f
 	};
+	
+	VAO = 0;
+	VBO = 0;
+	EBO = 0;
+	objectLocation = vec3(0, 0, 0);
+	objectRotation = 0;
 
-	VBO->push_back(0);
-	VAO->push_back(0);
-	EBO->push_back(0);
-	objectLocations->push_back(vec3(0, 0, 0));
-	objectRotations->push_back(0);
-	meshVertexCounts->push_back(108);
-	meshIndicesCount->push_back(36);
+	meshVertexCount = 108;
+	meshIndicesCount = 36;
 
-	glGenVertexArrays(1, &(*VAO)[objectNumber]);
-	glGenBuffers(1, &(*VBO)[objectNumber]);
-	glBindVertexArray((*VAO)[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*VBO)[objectNumber]);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(glGetAttribLocation(skyboxRenderingProgram, "v_vertex"));
 	glVertexAttribPointer(glGetAttribLocation(skyboxRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -134,7 +134,7 @@ GLuint Skybox::loadCubemap(std::vector<std::string> faces)
 	return textureID;
 }
 
-void Skybox::Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix, GLuint VAO)
+void Skybox::Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
 {
 	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
 	glUseProgram(skyboxRenderingProgram);
