@@ -19,8 +19,6 @@ GameObject::~GameObject()
 
 void GameObject::initialize(std::string filePath, float r, float g, float b, glm::vec3 position, float rotation, GLuint texture)
 {
-	int objectNumber = GameObjectManager::getInstance()->getMeshVertexCounts()->size();
-
 	VAO = 0;
 	VBO = 0;
 	EBO = 0;

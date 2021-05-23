@@ -4,7 +4,6 @@
 #include <vector>
 #include <iostream>
 #include "ShaderProgramAttachment.h"
-#include "GameObjectManager.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -73,21 +72,20 @@ void Skybox::initialize()
 		-1.0f, -1.0f,  1.0f,
 		 1.0f, -1.0f,  1.0f
 	};
-
-	int objectNumber = GameObjectManager::getInstance()->getMeshVertexCounts()->size();
 	
-	GameObjectManager::getInstance()->getVBO()->push_back(0);
-	GameObjectManager::getInstance()->getVAO()->push_back(0);
-	GameObjectManager::getInstance()->getEBO()->push_back(0);
-	GameObjectManager::getInstance()->getObjectLocations()->push_back(vec3(0, 0, 0));
-	GameObjectManager::getInstance()->getObjectRotations()->push_back(0);
-	GameObjectManager::getInstance()->getMeshVertexCounts()->push_back(108);
-	GameObjectManager::getInstance()->getMeshIndicesCount()->push_back(36);
+	VAO = 0;
+	VBO = 0;
+	EBO = 0;
+	objectLocation = vec3(0, 0, 0);
+	objectRotation = 0;
 
-	glGenVertexArrays(1, &(*GameObjectManager::getInstance()->getVAO())[objectNumber]);
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBindVertexArray((*GameObjectManager::getInstance()->getVAO())[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
+	meshVertexCount = 108;
+	meshIndicesCount = 36;
+
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(glGetAttribLocation(skyboxRenderingProgram, "v_vertex"));
 	glVertexAttribPointer(glGetAttribLocation(skyboxRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -136,7 +134,7 @@ GLuint Skybox::loadCubemap(std::vector<std::string> faces)
 	return textureID;
 }
 
-void Skybox::Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix, GLuint VAO)
+void Skybox::Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
 {
 	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
 	glUseProgram(skyboxRenderingProgram);

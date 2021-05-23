@@ -1,8 +1,6 @@
 #include "ObjectLoader.h"
 
-
 #include <iostream>
-#include <ostream>
 
 ObjectLoader* ObjectLoader::sharedInstance = nullptr;
 

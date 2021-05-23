@@ -14,11 +14,18 @@ public:
 	void initialize();
 	GLuint loadCubemap(std::vector<std::string> faces);
 	
-	void Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix, GLuint VAO);
+	void Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
 private:
 	GLuint skyboxRenderingProgram;
 	GLuint skyboxTexture;
+	
+	GLuint VBO, VAO, EBO;
+
+	int meshVertexCount;
+	int meshIndicesCount;
+	glm::vec3 objectLocation;
+	float objectRotation;
 	
 	std::string basepath = "assets/";
 };

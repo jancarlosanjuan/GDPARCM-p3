@@ -14,7 +14,6 @@ public:
 	void Draw();
 
 private:
-	std::string basepath = "assets/";
 	GLuint texture;
 
 	GLuint VBO, VAO, EBO;

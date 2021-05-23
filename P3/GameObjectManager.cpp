@@ -1,4 +1,5 @@
 #include "GameObjectManager.h"
+#include "GameObject.h"
 
 GameObjectManager* GameObjectManager::sharedInstance = nullptr;
 
@@ -9,44 +10,22 @@ GameObjectManager* GameObjectManager::getInstance()
     return sharedInstance;
 }
 
-std::vector<GLuint>* GameObjectManager::getVBO()
-{
-    return &VBO;
-}
-
-std::vector<GLuint>* GameObjectManager::getVAO()
-{
-    return &VAO;
-}
-
-std::vector<GLuint>* GameObjectManager::getEBO()
-{
-    return &EBO;
-}
-
-std::vector<int>* GameObjectManager::getMeshVertexCounts()
-{
-    return &meshVertexCounts;
-}
-
-std::vector<int>* GameObjectManager::getMeshIndicesCount()
-{
-    return &meshIndicesCount;
-}
-
-std::vector<glm::vec3>* GameObjectManager::getObjectLocations()
-{
-    return &objectLocations;
-}
-
-std::vector<float>* GameObjectManager::getObjectRotations()
-{
-    return &objectRotations;
-}
-
 GLuint* GameObjectManager::getRenderingProgram()
 {
     return &renderingProgram;
+}
+
+void GameObjectManager::Draw()
+{
+	for (int i = 0; i < gameObjects.size(); i++)
+	{
+		gameObjects[i]->Draw();
+	}
+}
+
+void GameObjectManager::addGameObject(GameObject* newObject)
+{
+	gameObjects.push_back(newObject);
 }
 
 GameObjectManager::GameObjectManager()
