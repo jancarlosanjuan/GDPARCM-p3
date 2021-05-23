@@ -21,6 +21,7 @@
 #include "ObjectLoader.h"
 #include "GameObjectManager.h"
 #include "IETThread.h"
+#include "GameObject.h"
 
 using namespace std;
 using namespace glm;
@@ -28,10 +29,7 @@ using namespace glm;
 #define WIDTH 1024
 #define HEIGHT 768
 
-GLuint renderingProgram;
 GLuint lakeRenderingProgram;
-
-
 
 vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 //vec3 lightPosition = vec3(1.0f, -1.0f, -1.0f); unused direction vector
@@ -90,6 +88,12 @@ glm::vec3 lightPos(-200.0f, 200.0f, 200.0f);
 Skybox* skybox;
 loadWaiter* waiter;
 
+GameObject house;
+GameObject ground;
+GameObject uptree;
+GameObject tree;
+GameObject grass;
+
 Game::Game()
 {
 	waiter = new loadWaiter();
@@ -97,66 +101,6 @@ Game::Game()
 
 Game::~Game()
 {
-}
-
-void initializeObjectFromFile(string filePath, float r, float g, float b, vec3 position, float rotation) {
-	int objectNumber = GameObjectManager::getInstance()->getMeshVertexCounts()->size();
-
-	GameObjectManager::getInstance()->getVBO()->push_back(0);
-	GameObjectManager::getInstance()->getVAO()->push_back(0);
-	GameObjectManager::getInstance()->getEBO()->push_back(0);
-	GameObjectManager::getInstance()->getObjectLocations()->push_back(position);
-	GameObjectManager::getInstance()->getObjectRotations()->push_back(rotation);
-
-	vector <tinyobj::shape_t> shapes = ObjectLoader::getInstance()->loadFile(filePath);
-
-	GameObjectManager::getInstance()->getMeshVertexCounts()->push_back(shapes[0].mesh.positions.size());
-	GameObjectManager::getInstance()->getMeshIndicesCount()->push_back(shapes[0].mesh.indices.size());
-
-	glGenVertexArrays(1, &(*GameObjectManager::getInstance()->getVAO())[objectNumber]);
-	glBindVertexArray((*GameObjectManager::getInstance()->getVAO())[objectNumber]);
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, shapes[0].mesh.positions.size() * sizeof(float), &(shapes[0].mesh.positions[0]), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_vertex"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, shapes[0].mesh.normals.size() * sizeof(float), &(shapes[0].mesh.normals[0]), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_normal"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_normal"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, shapes[0].mesh.texcoords.size() * sizeof(float), &(shapes[0].mesh.texcoords[0]), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_tex"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_tex"), 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-
-	/*std::vector<vec3> colors;
-	for (int i = 0; i < shapes[0].mesh.positions.size() / 3; i++) {
-		colors.push_back(vec3(r, g, b));
-	}
-	//actual buffer work
-	glGenBuffers(1, &VBO[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(vec3), &(colors[0]), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_color"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_color"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);*/
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getEBO())[objectNumber]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getEBO())[objectNumber]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, shapes[0].mesh.indices.size() * sizeof(uint), &(shapes[0].mesh.indices[0]), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void initializeLake(string filePath, float r, float g, float b, vec3 position, float rotation) {
@@ -222,110 +166,6 @@ void initializeLake(string filePath, float r, float g, float b, vec3 position, f
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getEBO())[objectNumber]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, shapes[0].mesh.indices.size() * sizeof(uint), &(shapes[0].mesh.indices[0]), GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void initializeLoadedObject(vector<tinyobj::shape_t> shapes, float r, float g, float b, vec3 position) {
-	int objectNumber = GameObjectManager::getInstance()->getMeshVertexCounts()->size();
-
-	GameObjectManager::getInstance()->getVBO()->push_back(0);
-	GameObjectManager::getInstance()->getVAO()->push_back(0);
-	GameObjectManager::getInstance()->getEBO()->push_back(0);
-	GameObjectManager::getInstance()->getObjectLocations()->push_back(position);
-
-	GameObjectManager::getInstance()->getMeshVertexCounts()->push_back(shapes[0].mesh.positions.size());
-	GameObjectManager::getInstance()->getMeshIndicesCount()->push_back(shapes[0].mesh.indices.size());
-
-	glGenVertexArrays(1, &(*GameObjectManager::getInstance()->getVAO())[objectNumber]);
-	glBindVertexArray((*GameObjectManager::getInstance()->getVAO())[objectNumber]);
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, shapes[0].mesh.positions.size() * sizeof(float), &(shapes[0].mesh.positions[0]), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_vertex"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, shapes[0].mesh.normals.size() * sizeof(float), &(shapes[0].mesh.normals[0]), GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_normal"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_normal"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	if (shapes[0].mesh.texcoords.size() > 0) {
-		glGenBuffers(1, &(*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-		glBindBuffer(GL_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getVBO())[objectNumber]);
-		glBufferData(GL_ARRAY_BUFFER, shapes[0].mesh.texcoords.size() * sizeof(float), &(shapes[0].mesh.texcoords[0]), GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_tex"));
-		glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_tex"), 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	/*std::vector<vec3> colors;
-	for (int i = 0; i < shapes[0].mesh.positions.size() / 3; i++) {
-		colors.push_back(vec3(r, g, b));
-	}
-	//actual buffer work
-	glGenBuffers(1, &VBO[objectNumber]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO[objectNumber]);
-	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(vec3), &(colors[0]), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(glGetAttribLocation(renderingProgram, "v_color"));
-	glVertexAttribPointer(glGetAttribLocation(renderingProgram, "v_color"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);*/
-
-	glGenBuffers(1, &(*GameObjectManager::getInstance()->getEBO())[objectNumber]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (*GameObjectManager::getInstance()->getEBO())[objectNumber]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, shapes[0].mesh.indices.size() * sizeof(uint), &(shapes[0].mesh.indices[0]), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void initializeTrees(string trunkPath, string leavesPath, vec3 minPosition, vec3 maxPosition, int numTrees) {
-	treeCount = numTrees;
-	treeStartIndex = GameObjectManager::getInstance()->getVAO()->size();
-
-	vector<tinyobj::shape_t> treeShapes = ObjectLoader::getInstance()->loadFile(trunkPath);
-	vector<tinyobj::shape_t> leavesShapes = ObjectLoader::getInstance()->loadFile(leavesPath);
-
-	for (int i = 0; i < numTrees; i++) {
-		float xPos = rand() % (int)(maxPosition.x - minPosition.x) + minPosition.x;
-		float zPos = rand() % (int)(maxPosition.z - minPosition.z) + minPosition.z;
-		float rotation = 0;
-		GameObjectManager::getInstance()->getObjectRotations()->push_back(rotation);
-		GameObjectManager::getInstance()->getObjectRotations()->push_back(rotation);
-		initializeLoadedObject(treeShapes, 1.0f, 1.0f, 1.0f, vec3(xPos, 0, zPos));
-		initializeLoadedObject(leavesShapes, 1.0f, 1.0f, 1.0f, vec3(xPos, 4.25f, zPos));
-	}
-}
-
-void initializeFallenTrees(string fallenPath, vec3 minPosition, vec3 maxPosition, int numTrees) {
-	fallenTreeCount = numTrees;
-	fallenStartIndex = GameObjectManager::getInstance()->getVAO()->size();
-
-	vector<tinyobj::shape_t> treeShapes = ObjectLoader::getInstance()->loadFile(fallenPath);
-
-	for (int i = 0; i < numTrees; i++) {
-		float xPos = rand() % (int)(maxPosition.x - minPosition.x) + minPosition.x;
-		float zPos = rand() % (int)(maxPosition.z - minPosition.z) + minPosition.z;
-		GameObjectManager::getInstance()->getObjectRotations()->push_back(rand() % 360);
-		initializeLoadedObject(treeShapes, 1.0f, 1.0f, 1.0f, vec3(xPos, 0.5f, zPos));
-	}
-}
-
-void initializeGrass(string grassPath, vec3 minPosition, vec3 maxPosition, int numGrass) {
-	grassCount = numGrass;
-	grassStartIndex = GameObjectManager::getInstance()->getVAO()->size();
-
-	vector<tinyobj::shape_t> grassShapes = ObjectLoader::getInstance()->loadFile(grassPath);
-
-	for (int i = 0; i < numGrass; i++) {
-		float xPos = rand() % (int)(maxPosition.x - minPosition.x) + minPosition.x;
-		float zPos = rand() % (int)(maxPosition.z - minPosition.z) + minPosition.z;
-		GameObjectManager::getInstance()->getObjectRotations()->push_back(rand() % 360);
-		initializeLoadedObject(grassShapes, 0.5647f, 0.933f, 0.5647f, vec3(xPos, 0.25f, zPos));
-	}
 }
 
 void loadPNGTexture(string filePath) {
@@ -396,7 +236,7 @@ void drawObject(int index, GLuint program) {
 }
 
 void init(GLFWwindow* window) {
-	renderingProgram = ShaderProgram::getInstance()->createShaderProgram();
+	*GameObjectManager::getInstance()->getRenderingProgram() = ShaderProgram::getInstance()->createShaderProgram();
 	lakeRenderingProgram = ShaderProgram::getInstance()->createShadowlessShaderProgram();
 	skybox = new Skybox();
 
@@ -405,16 +245,10 @@ void init(GLFWwindow* window) {
 
 	poolStartIndex = 0;
 	initializeLake(poolFile, 0, 1.0f, 1.0f, vec3(0, -8.0f, -150.0f), 0);
-	houseStartIndex = 1;
-	initializeObjectFromFile(houseFile, 1.0f, 1.0f, 1.0f, vec3(50.0f, 0.25f, 0), acos(0.0) * 3);
-	groundStartIndex = 2;
-	initializeObjectFromFile(groundFile, 1.0f, 1.0f, 1.0f, vec3(-50.0f, 0, 0), 0);
-	initializeTrees(treeTrunkFile, treeLeavesFile, vec3(-200.0f, 0, -50.0f), vec3(-100.0f, 0, 100.0f), 100);
-	initializeFallenTrees(fallenFile, vec3(-150.0f, 0, -25.0f), vec3(-50.0f, 0, 100.0f), 25);
-	initializeGrass(grassFile, vec3(-200.0f, 0, -25.0f), vec3(100.0f, 0, 100.0f), 500);
 
-	glUseProgram(renderingProgram);
-	glUniform1i(glGetUniformLocation(renderingProgram, "texture1"), 1);
+
+	glUseProgram(*GameObjectManager::getInstance()->getRenderingProgram());
+	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "texture1"), 1);
 
 	loadPNGTexture(waterFile);
 	loadPNGTexture(floorFile);
@@ -423,6 +257,17 @@ void init(GLFWwindow* window) {
 	loadJPGTexture(barkFile);
 
 	glBindVertexArray(0);
+
+	house.initialize(houseFile, 1.0f, 1.0f, 1.0f, vec3(50.0f, 0.25f, 0), acos(0.0) * 3, texture[2]);
+
+	ground.initialize(groundFile, 1.0f, 1.0f, 1.0f, vec3(-50.0f, 0, 0), 0, texture[1]);
+
+	uptree.initialize(treeTrunkFile, 1, 1, 1, vec3(0, 0, 0), 0, texture[4]);
+
+	fallenStartIndex = GameObjectManager::getInstance()->getVAO()->size();
+	tree.initialize(fallenFile, 1, 1, 1, vec3(-100, 0, 50), rand() % 360, texture[4]);
+	grassStartIndex = GameObjectManager::getInstance()->getVAO()->size();
+	grass.initialize(grassFile, 0.5647f, 0.933f, 0.5647f, vec3(10, 0.25f, 0), 0, texture[1]);
 
 	glGenFramebuffers(1, &depthMapFBO);
 
@@ -443,7 +288,7 @@ void init(GLFWwindow* window) {
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	glUniform1i(glGetUniformLocation(renderingProgram, "u_shadowMap"), 0);
+	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_shadowMap"), 0);
 
 	skyboxStartIndex = GameObjectManager::getInstance()->getVAO()->size();
 	skybox->initialize();
@@ -476,65 +321,46 @@ void display(GLFWwindow* window, double currentTime) {
 	glViewport(0, 0, WIDTH, HEIGHT);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glUseProgram(renderingProgram);
+	glUseProgram(*GameObjectManager::getInstance()->getRenderingProgram());
 
 	glm::mat4 projectionMatrix(1.0);
 	if (isPerspectiveMode)
 		projectionMatrix = glm::perspective(glm::radians(fov), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
 	else
 		projectionMatrix = glm::ortho(-25.0f, 25.0f, -25.0f, 25.0f, 0.1f, 100.0f);
-	GLint uniformProjection = glGetUniformLocation(renderingProgram, "u_projection");
+	GLint uniformProjection = glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_projection");
 	glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
 	glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraFront);
 	glm::vec3 cameraRight = glm::normalize(glm::cross(cameraUp, cameraDirection));
 	glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-	GLint uniformView = glGetUniformLocation(renderingProgram, "u_view");
+	GLint uniformView = glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_view");
 	glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
-	GLint uniformColor = glGetUniformLocation(renderingProgram, "u_lightColor");
+	GLint uniformColor = glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_lightColor");
 	glUniform3fv(uniformColor, 1, &lightColor[0]);
 
-	GLint uniformLightPos = glGetUniformLocation(renderingProgram, "u_lightDir");
+	GLint uniformLightPos = glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_lightDir");
 	glUniform3fv(uniformLightPos, 1, &lightPos[0]);
 
-	GLint uniformCamPos = glGetUniformLocation(renderingProgram, "u_viewPos");
+	GLint uniformCamPos = glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_viewPos");
 	glUniform3fv(uniformCamPos, 1, &cameraPos[0]);
 
-	glUniformMatrix4fv(glGetUniformLocation(renderingProgram, "u_lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	//rendering the actual scene
 	{glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture[2]);
-	drawObject(houseStartIndex, renderingProgram);
+	house.Draw();
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	drawObject(groundStartIndex, renderingProgram);
+	ground.Draw();
 
-	for (int i = 0; i < treeCount; i++) {
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture[4]);//trunk
-		drawObject(i * 2 + treeStartIndex, renderingProgram);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture[3]);//leaves
-		drawObject(i * 2 + 1 + treeStartIndex, renderingProgram);
-	}
+	uptree.Draw();
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture[4]);
-	for (int i = 0; i < fallenTreeCount; i++) {
-		drawObject(i + fallenStartIndex, renderingProgram);
-	}
+	tree.Draw();
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	for (int i = 0; i < grassCount; i++) {
-		drawObject(i + grassStartIndex, renderingProgram);
-	}
+	grass.Draw();
 
 	glUseProgram(lakeRenderingProgram);
 	glUniformMatrix4fv(glGetUniformLocation(lakeRenderingProgram, "u_projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));

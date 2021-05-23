@@ -2,22 +2,26 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <GL/glew.h>
-#include <vector>
 
 class GameObject
 {
 public:
-	GameObject(GLuint* renderingProgram);
+	GameObject();
 	~GameObject();
 
-	void initialize(int objectNumber, std::vector<GLuint>* VAO, std::vector<GLuint>* VBO, std::vector<GLuint>* EBO, std::vector<int>* meshVertexCounts,
-		std::vector<int>* meshIndicesCount, std::vector<glm::vec3>* objectLocations, std::vector<float>* objectRotations);
+	void initialize(std::string filePath, float r, float g, float b, glm::vec3 position, float rotation, GLuint texture);
 
-	void Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix, GLuint VAO);
+	void Draw();
 
 private:
-	GLuint* renderingProgram;
-
 	std::string basepath = "assets/";
+	GLuint texture;
+
+	GLuint VBO, VAO, EBO;
+
+	int meshVertexCount;
+	int meshIndicesCount;
+	glm::vec3 objectLocation;
+	float objectRotation;
 };
 

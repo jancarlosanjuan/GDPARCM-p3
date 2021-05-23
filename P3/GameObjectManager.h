@@ -16,6 +16,8 @@ public:
 	std::vector <int>* getMeshIndicesCount();
 	std::vector <glm::vec3>* getObjectLocations();
 	std::vector <float>* getObjectRotations();
+
+	GLuint* getRenderingProgram();
 private:
 	GameObjectManager();
 	GameObjectManager(GameObjectManager const&) {};             // copy constructor is private
@@ -28,5 +30,7 @@ private:
 	std::vector <int> meshIndicesCount;
 	std::vector <glm::vec3> objectLocations;
 	std::vector <float> objectRotations;
+
+	GLuint renderingProgram;
 };
 

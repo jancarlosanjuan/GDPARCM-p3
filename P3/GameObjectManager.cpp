@@ -44,6 +44,11 @@ std::vector<float>* GameObjectManager::getObjectRotations()
     return &objectRotations;
 }
 
+GLuint* GameObjectManager::getRenderingProgram()
+{
+    return &renderingProgram;
+}
+
 GameObjectManager::GameObjectManager()
 {
 }
