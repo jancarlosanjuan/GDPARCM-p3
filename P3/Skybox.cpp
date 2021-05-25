@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include "ShaderProgramAttachment.h"
+#include "GameObjectManager.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,20 +15,15 @@ using namespace glm;
 
 Skybox::Skybox()
 {
-	createShader();
+
 }
 
 Skybox::~Skybox()
 {
 }
 
-void Skybox::createShader()
-{
-	skyboxRenderingProgram = ShaderProgram::getInstance()->createSkyboxShaderProgram();
-}
-
 void Skybox::initialize()
-{
+{	
 	float skyboxVertices[] = {
 		// positions          
 		-1.0f,  1.0f, -1.0f,
@@ -81,14 +77,14 @@ void Skybox::initialize()
 
 	meshVertexCount = 108;
 	meshIndicesCount = 36;
-
+	
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(glGetAttribLocation(skyboxRenderingProgram, "v_vertex"));
-	glVertexAttribPointer(glGetAttribLocation(skyboxRenderingProgram, "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(glGetAttribLocation(*GameObjectManager::getInstance()->getSkyboxRenderingProgram(), "v_vertex"));
+	glVertexAttribPointer(glGetAttribLocation(*GameObjectManager::getInstance()->getSkyboxRenderingProgram(), "v_vertex"), 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 	std::vector<std::string> faces{
 	basepath + "skybox/right.jpg",
@@ -100,8 +96,8 @@ void Skybox::initialize()
 	};
 
 	skyboxTexture = loadCubemap(faces);
-	glUseProgram(skyboxRenderingProgram);
-	glUniform1i(glGetUniformLocation(skyboxRenderingProgram, "skybox"), 0);
+	glUseProgram(*GameObjectManager::getInstance()->getSkyboxRenderingProgram());
+	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getSkyboxRenderingProgram(), "skybox"), 0);
 }
 
 GLuint Skybox::loadCubemap(std::vector<std::string> faces)
@@ -137,15 +133,15 @@ GLuint Skybox::loadCubemap(std::vector<std::string> faces)
 void Skybox::Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
 {
 	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-	glUseProgram(skyboxRenderingProgram);
-	GLuint model_loc = glGetUniformLocation(skyboxRenderingProgram, "u_model");
+	glUseProgram(*GameObjectManager::getInstance()->getSkyboxRenderingProgram());
+	GLuint model_loc = glGetUniformLocation(*GameObjectManager::getInstance()->getSkyboxRenderingProgram(), "u_model");
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, acos(0.0f) * 2.0f, vec3(1, 0, 0));
 	model = glm::scale(model, vec3(100.0f));
 	glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 	viewMatrix = mat4(mat3(viewMatrix));
-	glUniformMatrix4fv(glGetUniformLocation(skyboxRenderingProgram, "u_view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-	glUniformMatrix4fv(glGetUniformLocation(skyboxRenderingProgram, "u_projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(*GameObjectManager::getInstance()->getSkyboxRenderingProgram(), "u_view"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(*GameObjectManager::getInstance()->getSkyboxRenderingProgram(), "u_projection"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 	glBindVertexArray(VAO);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);

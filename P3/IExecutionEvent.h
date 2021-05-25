@@ -1,7 +1,8 @@
 #pragma once
+class GameObject;
 class IExecutionEvent
 {
 public:
-	virtual void OnFinishedExecution() = 0;
+	virtual void OnFinishedExecution(GameObject*) = 0;
 };
 

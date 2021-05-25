@@ -9,9 +9,11 @@ public:
 	static GameObjectManager* getInstance();
 
 	GLuint* getRenderingProgram();
+	GLuint* getSkyboxRenderingProgram();
 
 	void Draw();
 	void addGameObject(GameObject* newObject);
+	void removeGameObject(GameObject* newObject);
 	
 private:
 	GameObjectManager();
@@ -22,5 +24,6 @@ private:
 	std::vector<GameObject*> gameObjects;
 
 	GLuint renderingProgram;
+	GLuint skyboxRenderingProgram;
 };
 

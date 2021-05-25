@@ -10,14 +10,12 @@ public:
 	Skybox();
 	~Skybox();
 
-	void createShader();
 	void initialize();
 	GLuint loadCubemap(std::vector<std::string> faces);
 	
 	void Draw(glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
 private:
-	GLuint skyboxRenderingProgram;
 	GLuint skyboxTexture;
 	
 	GLuint VBO, VAO, EBO;
