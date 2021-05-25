@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
-#include "IExecutionEvent.h"
-
+class GameScene;
+class ThreadPool;
 class Game
 {
 public:
@@ -18,20 +19,23 @@ private:
 
 	void calculateLighting();
 
+	int const SCENECOUNT = 5;
+
 	std::string basepath = "assets/";
 	std::string treeTrunkFile = basepath + "treetrunk.obj";
+	std::string leavesFile = basepath + "leaves.obj";
 	std::string fallenFile = basepath + "fallentree.obj";
 	std::string houseFile = basepath + "house.obj";
 	std::string grassFile = basepath + "grass.obj";
 	std::string groundFile = basepath + "ground.obj";
+	std::string toiletFile = basepath + "Final_Objects/toilet.obj";
+	std::string bunnyFile = basepath + "Final_Objects/bunny.obj";
+	std::string roomFile = basepath + "Final_Objects/ShowerRoom.obj";
+	std::string towelFile = basepath + "Final_Objects/Folded_Towels.obj";
+	std::string showerFile = basepath + "Final_Objects/Shower.obj";
+	std::string showerCaddyFile = basepath + "Final_Objects/ShowerCaddy.obj";
+	std::string tubFile = basepath + "Final_Objects/Tub.obj";
 
-	class Skybox* skybox;
-	class loadWaiter* waiter;
-};
-
-class loadWaiter : public IExecutionEvent
-{
-public:
-	bool finishedLoading = false;
-	void OnFinishedExecution(GameObject* loadedObject) override;
+	std::vector<GameScene*> scenes;
+	ThreadPool* pool;
 };

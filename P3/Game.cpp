@@ -10,10 +10,10 @@
 
 #include <time.h>
 
-#include "Skybox.h"
 #include "GameObjectManager.h"
 #include "GameObject.h"
 #include "GameScene.h"
+#include "ThreadPool.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -31,7 +31,7 @@ vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
 const float CAMERA_SPEED = 25.0f;
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, 0.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -50,11 +50,10 @@ unsigned int depthMapFBO;
 unsigned int depthMap;
 glm::vec3 lightPos(-200.0f, 200.0f, 200.0f);
 
-GameScene* scene;
-
 Game::Game()
 {
-	waiter = new loadWaiter();
+	pool = new ThreadPool("Thread Pool", 10);
+	pool->startScheduler();
 }
 
 Game::~Game()
@@ -65,29 +64,33 @@ void Game::init()
 {
 	*GameObjectManager::getInstance()->getRenderingProgram() = ShaderProgram::getInstance()->createShaderProgram();
 	*GameObjectManager::getInstance()->getSkyboxRenderingProgram() = ShaderProgram::getInstance()->createSkyboxShaderProgram();
-	skybox = new Skybox();
 
 	glEnable(GL_DEPTH_TEST);
 	srand(time(NULL));
 
 	std::vector<std::string> models;
 	models.push_back(houseFile);
-	models.push_back(groundFile);
 	models.push_back(treeTrunkFile);
+	models.push_back(leavesFile);
+	models.push_back(toiletFile);
 	models.push_back(fallenFile);
 	models.push_back(grassFile);
-	scene = new GameScene(models);
-	scene->loadScene();
+	models.push_back(bunnyFile);
+	models.push_back(roomFile);
+	models.push_back(towelFile);
+	models.push_back(showerFile);
+	models.push_back(showerCaddyFile);
+	models.push_back(tubFile);
+	for (int i = 0; i < SCENECOUNT; i++) {
+		GameScene* scene = new GameScene(models, pool);
+		scenes.push_back(scene);
+		scene->loadScene();
+	}
 
-	//GameObject* house = new GameObject();
-	//house->initialize(houseFile, , TextureManager::getInstance()->getTexture(2));
-	//GameObjectManager::getInstance()->addGameObject(house);
-
-	/*GameObject* ground = new GameObject();
+	GameObject* ground = new GameObject();
 	ground->getMesh(groundFile);
-	ground->getPNGTexture(floorFile);
-	ground->initialize(1.0f, 1.0f, 1.0f, vec3(-50.0f, 0, 0), 0);
-	GameObjectManager::getInstance()->addGameObject(ground);*/
+	ground->initialize(vec3(-50.0f, 0, 0), 0);
+	GameObjectManager::getInstance()->addGameObject(ground);
 
 	glGenFramebuffers(1, &depthMapFBO);
 
@@ -109,18 +112,15 @@ void Game::init()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_shadowMap"), 0);
-
-	//loader = new boxLoader(waiter, skybox);
-	//loader->start();
-	
-	//skybox->initialize();
 }
 
 void Game::display() 
 {
 	calculateLighting();
 
-	scene->activateScene();
+	for (int i = 0; i < scenes.size(); i++) {
+		scenes[i]->activateScene();
+	}
 	
 	glm::mat4 projectionMatrix;
 	projectionMatrix = glm::perspective(glm::radians(fov), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
@@ -285,10 +285,4 @@ void Game::Run()
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
-}
-
-void loadWaiter::OnFinishedExecution(GameObject* loadedObject)
-{
-	this->finishedLoading = true;
-	std::cout << "done" << std::endl;
 }
