@@ -13,7 +13,7 @@
 #include "Skybox.h"
 #include "GameObjectManager.h"
 #include "GameObject.h"
-#include "TextureManager.h"
+#include "GameScene.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -50,6 +50,8 @@ unsigned int depthMapFBO;
 unsigned int depthMap;
 glm::vec3 lightPos(-200.0f, 200.0f, 200.0f);
 
+GameScene* scene;
+
 Game::Game()
 {
 	waiter = new loadWaiter();
@@ -62,41 +64,30 @@ Game::~Game()
 void Game::init()
 {
 	*GameObjectManager::getInstance()->getRenderingProgram() = ShaderProgram::getInstance()->createShaderProgram();
+	*GameObjectManager::getInstance()->getSkyboxRenderingProgram() = ShaderProgram::getInstance()->createSkyboxShaderProgram();
 	skybox = new Skybox();
 
 	glEnable(GL_DEPTH_TEST);
 	srand(time(NULL));
 
-	glUseProgram(*GameObjectManager::getInstance()->getRenderingProgram());
-	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "texture1"), 1);
+	std::vector<std::string> models;
+	models.push_back(houseFile);
+	models.push_back(groundFile);
+	models.push_back(treeTrunkFile);
+	models.push_back(fallenFile);
+	models.push_back(grassFile);
+	scene = new GameScene(models);
+	scene->loadScene();
 
-	TextureManager::getInstance()->loadPNGTexture(waterFile);
-	TextureManager::getInstance()->loadPNGTexture(floorFile);
-	TextureManager::getInstance()->loadPNGTexture(woodenBoardsFile);
-	TextureManager::getInstance()->loadPNGTexture(leavesFile);
-	TextureManager::getInstance()->loadJPGTexture(barkFile);
+	//GameObject* house = new GameObject();
+	//house->initialize(houseFile, , TextureManager::getInstance()->getTexture(2));
+	//GameObjectManager::getInstance()->addGameObject(house);
 
-	glBindVertexArray(0);
-
-	GameObject* house = new GameObject();
-	house->initialize(houseFile, 1.0f, 1.0f, 1.0f, vec3(50.0f, 0.25f, 0), acos(0.0) * 3, TextureManager::getInstance()->getTexture(2));
-	GameObjectManager::getInstance()->addGameObject(house);
-
-	GameObject* ground = new GameObject();
-	ground->initialize(groundFile, 1.0f, 1.0f, 1.0f, vec3(-50.0f, 0, 0), 0, TextureManager::getInstance()->getTexture(1));
-	GameObjectManager::getInstance()->addGameObject(ground);
-
-	GameObject* uptree = new GameObject();
-	uptree->initialize(treeTrunkFile, 1, 1, 1, vec3(0, 0, 0), 0, TextureManager::getInstance()->getTexture(4));
-	GameObjectManager::getInstance()->addGameObject(uptree);
-
-	GameObject* tree = new GameObject();
-	tree->initialize(fallenFile, 1, 1, 1, vec3(-100, 0, 50), rand() % 360, TextureManager::getInstance()->getTexture(4));
-	GameObjectManager::getInstance()->addGameObject(tree);
-
-	GameObject* grass = new GameObject();
-	grass->initialize(grassFile, 0.5647f, 0.933f, 0.5647f, vec3(10, 0.25f, 0), 0, TextureManager::getInstance()->getTexture(1));
-	GameObjectManager::getInstance()->addGameObject(grass);
+	/*GameObject* ground = new GameObject();
+	ground->getMesh(groundFile);
+	ground->getPNGTexture(floorFile);
+	ground->initialize(1.0f, 1.0f, 1.0f, vec3(-50.0f, 0, 0), 0);
+	GameObjectManager::getInstance()->addGameObject(ground);*/
 
 	glGenFramebuffers(1, &depthMapFBO);
 
@@ -119,12 +110,17 @@ void Game::init()
 
 	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_shadowMap"), 0);
 
-	skybox->initialize();
+	//loader = new boxLoader(waiter, skybox);
+	//loader->start();
+	
+	//skybox->initialize();
 }
 
 void Game::display() 
 {
 	calculateLighting();
+
+	scene->activateScene();
 	
 	glm::mat4 projectionMatrix;
 	projectionMatrix = glm::perspective(glm::radians(fov), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
@@ -139,7 +135,7 @@ void Game::display()
 
 	GameObjectManager::getInstance()->Draw();
 
-	skybox->Draw(viewMatrix, projectionMatrix);
+	//skybox->Draw(viewMatrix, projectionMatrix);
 	
 	glBindVertexArray(0);
 }
@@ -291,7 +287,7 @@ void Game::Run()
 	exit(EXIT_SUCCESS);
 }
 
-void loadWaiter::OnFinishedExecution()
+void loadWaiter::OnFinishedExecution(GameObject* loadedObject)
 {
 	this->finishedLoading = true;
 	std::cout << "done" << std::endl;

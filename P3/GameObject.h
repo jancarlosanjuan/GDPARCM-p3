@@ -9,13 +9,12 @@ public:
 	GameObject();
 	~GameObject();
 
-	void initialize(std::string filePath, float r, float g, float b, glm::vec3 position, float rotation, GLuint texture);
+	void getMesh(std::string filepath);
+	void initialize(float r, float g, float b, glm::vec3 position, float rotation);
 
 	void Draw();
 
 private:
-	GLuint texture;
-
 	GLuint VBO, VAO, EBO;
 
 	int meshVertexCount;
