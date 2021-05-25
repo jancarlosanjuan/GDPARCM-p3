@@ -1,0 +1,12 @@
+# Blender MTL File: 'room.blend'
+# Material Count: 1
+
+newmtl mattblack
+Ns 655.127325
+Ka 1.000000 1.000000 1.000000
+Kd 0.152665 0.152665 0.152665
+Ks 0.692727 0.692727 0.692727
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3

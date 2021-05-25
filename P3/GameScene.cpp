@@ -45,13 +45,15 @@ void GameScene::showObjects()
 {
 	for (int i = 0; i < gameObjects.size(); i++)
 	{
-		gameObjects[i]->initialize(1.0f, 1.0f, 1.0f, glm::vec3(-50.0f, 0, -50.0f), 0);
+		if (!initializedObjects)
+			gameObjects[i]->initialize(glm::vec3(-50 + rand() % 101, 10, -75 + rand() % 50), 0);
 		GameObjectManager::getInstance()->addGameObject(gameObjects[i]);
 	}
+	initializedObjects = true;
 	displayingObjects = true;
 }
 
-void GameScene::OnFinishedExecution(GameObject* loadedObject)
+void GameScene::OnFinishedExecution()
 {
 	loadedObjectsNum++;
 }

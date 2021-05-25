@@ -10,7 +10,7 @@ public:
 	~GameObject();
 
 	void getMesh(std::string filepath);
-	void initialize(float r, float g, float b, glm::vec3 position, float rotation);
+	void initialize(glm::vec3 position, float rotation);
 
 	void Draw();
 

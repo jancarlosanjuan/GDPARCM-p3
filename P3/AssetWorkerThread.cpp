@@ -16,6 +16,6 @@ AssetWorkerThread::~AssetWorkerThread()
 void AssetWorkerThread::run()
 {
 	loadingObject->getMesh(modelPath);
-	execEvent->OnFinishedExecution(loadingObject);
+	execEvent->OnFinishedExecution();
 	delete this;
 }

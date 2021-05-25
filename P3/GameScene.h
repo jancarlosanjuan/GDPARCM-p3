@@ -3,6 +3,7 @@
 #include <string>
 #include "IExecutionEvent.h"
 
+class GameObject;
 class GameScene : public IExecutionEvent
 {
 public:
@@ -15,13 +16,14 @@ public:
 
 	void showObjects();
 	
-	void OnFinishedExecution(GameObject* loadedObject) override;
+	void OnFinishedExecution() override;
 
 private:
 	std::vector<GameObject*> gameObjects;
 	std::vector<std::string> modelPaths;
 	int loadedObjectsNum = 0;
 
+	bool initializedObjects = false;
 	bool displayingObjects = false;
 };
 

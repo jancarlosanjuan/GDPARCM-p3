@@ -24,7 +24,7 @@ void GameObject::getMesh(std::string filepath)
 	shapes.insert(std::pair<GameObject*, std::vector<tinyobj::shape_t>>(this, ObjectLoader::getInstance()->loadFile(filepath)));
 }
 
-void GameObject::initialize(float r, float g, float b, glm::vec3 position, float rotation)
+void GameObject::initialize(glm::vec3 position, float rotation)
 {
 	VAO = 0;
 	VBO = 0;
