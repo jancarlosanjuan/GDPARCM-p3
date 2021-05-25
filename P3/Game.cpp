@@ -13,6 +13,7 @@
 #include "GameObjectManager.h"
 #include "GameObject.h"
 #include "GameScene.h"
+#include "ThreadPool.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -51,6 +52,8 @@ glm::vec3 lightPos(-200.0f, 200.0f, 200.0f);
 
 Game::Game()
 {
+	pool = new ThreadPool("Thread Pool", 10);
+	pool->startScheduler();
 }
 
 Game::~Game()
@@ -79,7 +82,7 @@ void Game::init()
 	models.push_back(showerCaddyFile);
 	models.push_back(tubFile);
 	for (int i = 0; i < SCENECOUNT; i++) {
-		GameScene* scene = new GameScene(models);
+		GameScene* scene = new GameScene(models, pool);
 		scenes.push_back(scene);
 		scene->loadScene();
 	}

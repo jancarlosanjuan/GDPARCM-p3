@@ -4,6 +4,7 @@
 #include <vector>
 
 class GameScene;
+class ThreadPool;
 class Game
 {
 public:
@@ -36,4 +37,5 @@ private:
 	std::string tubFile = basepath + "Final_Objects/Tub.obj";
 
 	std::vector<GameScene*> scenes;
+	ThreadPool* pool;
 };

@@ -1,11 +1,13 @@
 #include "GameScene.h"
 #include "GameObject.h"
 #include "GameObjectManager.h"
-#include "AssetWorkerThread.h"
+#include "loadObjectMesh.h"
+#include "ThreadPool.h"
 
-GameScene::GameScene(std::vector<std::string> models)
+GameScene::GameScene(std::vector<std::string> models, ThreadPool* pool)
 {
 	this->modelPaths = models;
+	this->pool = pool;
 }
 
 GameScene::~GameScene()
@@ -18,8 +20,9 @@ void GameScene::loadScene()
 	{
 		GameObject* newObject = new GameObject();
 		gameObjects.push_back(newObject);
-		AssetWorkerThread* worker = new AssetWorkerThread(modelPaths[i], newObject, this);
-		worker->start();
+		loadObjectMesh* task = new loadObjectMesh(modelPaths[i], newObject, this);
+		pool->scheduleTask(task);
+		
 	}
 }
 
@@ -39,6 +42,11 @@ void GameScene::deactivateScene()
 	}
 
 	displayingObjects = false;
+}
+
+float GameScene::getLoadProgress()
+{
+	return (float)loadedObjectsNum / modelPaths.size();
 }
 
 void GameScene::showObjects()
