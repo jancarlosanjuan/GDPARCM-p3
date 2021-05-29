@@ -1,5 +1,3 @@
-
-
 #include "GameObject.h"
 
 #include <iostream>
@@ -28,11 +26,6 @@ void GameObject::getMesh(std::string filepath)
 
 void GameObject::initialize(glm::vec3 position, float rotation)
 {
-
-
-	
-
-
 	VAO = 0;
 	VBO = 0;
 	EBO = 0;

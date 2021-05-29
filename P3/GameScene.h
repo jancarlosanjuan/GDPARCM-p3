@@ -14,15 +14,13 @@ public:
 	void loadScene();
 	void activateScene();
 	void deactivateScene();
-
+	void unloadScene();
+	
 	float getLoadProgress();
 
 	void showObjects();
 	
 	void OnFinishedExecution() override;
-
-	bool someBool = false;
-
 private:
 	std::vector<GameObject*> gameObjects;
 	std::vector<std::string> modelPaths;
@@ -31,7 +29,6 @@ private:
 	bool initializedObjects = false;
 	bool displayingObjects = false;
 
-	
 	ThreadPool* pool;
 };
 

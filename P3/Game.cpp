@@ -16,7 +16,6 @@
 #include <time.h>
 
 #include "GameObjectManager.h"
-#include "GameObject.h"
 #include "GameScene.h"
 #include "ThreadPool.h"
 
@@ -73,7 +72,6 @@ unsigned int framebuffer;
 unsigned int textureColorbuffer;
 unsigned int rbo;
 float loadingBar;
-bool openedWindow = false;
 
 Game::Game()
 {
@@ -120,6 +118,7 @@ void Game::init(GLFWwindow* window)
 	for (int i = 0; i < SCENECOUNT; i++) {//SCENECOUNT
 		GameScene* scene = new GameScene(models, pool);
 		scenes.push_back(scene);
+		openScenes.push_back(false);
 		scene->loadScene();
 	}
 
@@ -277,17 +276,10 @@ void Game::display()
 
 	ImGui::Begin("MAIN WINDOW");
 	{
-		
 		for(int i = 0; i<scenes.size() ; ++i)
 		{
 			this->DisplayIMGUIwindow(i , std::to_string(i));
 		}
-		
-		
-		
-
-		
-		
 	}
 	ImGui::End();
 
@@ -335,6 +327,18 @@ void Game::calculateLighting()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
 
+}
+
+bool Game::hasOtherSceneOpen(int index)
+{
+	for (int i = 0; i < openScenes.size(); i++)
+	{
+		if (i != index) {
+			if (openScenes[i])
+				return true;
+		}
+	}
+	return false;
 }
 
 void translateInput(GLFWwindow* window) {
@@ -455,45 +459,30 @@ void Game::DisplayIMGUIwindow(int index, std::string windowName)
 {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ImGui::Begin(windowName.c_str());
-//	ImGui::Text("SOME TEXT 2");
+	//	ImGui::Text("SOME TEXT 2");
 	float store = scenes[index]->getLoadProgress();
-	bool someBool = scenes[index]->someBool;
 
-	if(ImGui::Button("Open Viewport"))
+	if (ImGui::CollapsingHeader("CollapsingHeader") && (int)store == 1 && !hasOtherSceneOpen(index))
 	{
-		scenes[index]->someBool = !someBool;
-	}
-
-	if(someBool)
-	{
-		if (ImGui::CollapsingHeader("CollapsingHeader") && (int)store == 1)
-		{
-			openedWindow = true;
+		if (!openScenes[index]) {
+			openScenes[index] = true;
 			scenes[index]->activateScene();
-			for(int i = 0 ; i<scenes.size() ; ++i)
-			{
-				if(i != index)
-				{
-					scenes[index]->deactivateScene();
-				}
-			}
-			ImGui::GetWindowDrawList()->AddImage(
-				(void*)textureColorbuffer,
-				ImVec2(ImGui::GetCursorScreenPos()),
-				ImVec2(ImGui::GetCursorScreenPos().x + WIDTH / 2,
-					ImGui::GetCursorScreenPos().y + HEIGHT / 2), ImVec2(0, 1), ImVec2(1, 0));
-			ImGui::SetWindowSize({ 250,250 });
 		}
-		else
-		{
-			openedWindow = false;
-			scenes[index]->deactivateScene();
-			ImGui::SetWindowSize({ 250,150 });
-		}
+		ImGui::GetWindowDrawList()->AddImage(
+			(void*)textureColorbuffer,
+			ImVec2(ImGui::GetCursorScreenPos()),
+			ImVec2(ImGui::GetCursorScreenPos().x + WIDTH / 2,
+				ImGui::GetCursorScreenPos().y + HEIGHT / 2), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::SetWindowSize({ 250,250 });
 	}
-	
-
-
+	else
+	{
+		if (openScenes[index]) {
+			openScenes[index] = false;
+			scenes[index]->deactivateScene();
+		}
+		ImGui::SetWindowSize({ 250,150 });
+	}
 
 	ImGui::SliderFloat("float", &store, 0.0f, 1.0f);
 	ImGui::End();

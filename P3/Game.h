@@ -22,6 +22,8 @@ private:
 
 	void calculateLighting();
 
+	bool hasOtherSceneOpen(int index);
+
 	int const SCENECOUNT = 5;
 
 	std::string basepath = "assets/";
@@ -40,5 +42,7 @@ private:
 	std::string tubFile = basepath + "Final_Objects/Tub.obj";
 
 	std::vector<GameScene*> scenes;
+	std::vector<bool> openScenes;
+	
 	ThreadPool* pool;
 };
