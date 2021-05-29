@@ -22,7 +22,6 @@ void GameScene::loadScene()
 		gameObjects.push_back(newObject);
 		loadObjectMesh* task = new loadObjectMesh(modelPaths[i], newObject, this);
 		pool->scheduleTask(task);
-		
 	}
 }
 
@@ -36,12 +35,37 @@ void GameScene::activateScene()
 
 void GameScene::deactivateScene()
 {
-	for (int i = 0; i < gameObjects.size(); i++)
-	{
-		GameObjectManager::getInstance()->removeGameObject(gameObjects[i]);
+	if (displayingObjects) {
+		for (int i = 0; i < gameObjects.size(); i++)
+		{
+			GameObjectManager::getInstance()->removeGameObject(gameObjects[i]);
+		}
 	}
 
 	displayingObjects = false;
+}
+
+void GameScene::unloadScene()
+{
+	if (initializedObjects) {
+		if (displayingObjects)
+		{
+			for (int i = 0; i < gameObjects.size(); i++)
+			{
+				GameObjectManager::getInstance()->removeGameObject(gameObjects[i]);
+			}
+		}
+
+		for (int i = 0; i < gameObjects.size(); i++)
+		{
+			delete gameObjects[i];
+		}
+		gameObjects.clear();
+
+		initializedObjects = false;
+		loadedObjectsNum = 0;
+		displayingObjects = false;
+	}
 }
 
 float GameScene::getLoadProgress()

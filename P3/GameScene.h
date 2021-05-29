@@ -14,13 +14,13 @@ public:
 	void loadScene();
 	void activateScene();
 	void deactivateScene();
-
+	void unloadScene();
+	
 	float getLoadProgress();
 
 	void showObjects();
 	
 	void OnFinishedExecution() override;
-
 private:
 	std::vector<GameObject*> gameObjects;
 	std::vector<std::string> modelPaths;

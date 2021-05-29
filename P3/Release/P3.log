@@ -1,0 +1,12 @@
+﻿Game.obj : error LNK2001: unresolved external symbol "public: void __thiscall GameObjectManager::addGameObject(class GameObject *)" (?addGameObject@GameObjectManager@@QAEXPAVGameObject@@@Z)
+Game.obj : error LNK2001: unresolved external symbol "public: void __thiscall GameObjectManager::Draw(void)" (?Draw@GameObjectManager@@QAEXXZ)
+Game.obj : error LNK2001: unresolved external symbol "public: unsigned int * __thiscall GameObjectManager::getSkyboxRenderingProgram(void)" (?getSkyboxRenderingProgram@GameObjectManager@@QAEPAIXZ)
+Game.obj : error LNK2001: unresolved external symbol "public: unsigned int * __thiscall GameObjectManager::getRenderingProgram(void)" (?getRenderingProgram@GameObjectManager@@QAEPAIXZ)
+Game.obj : error LNK2001: unresolved external symbol "public: static class GameObjectManager * __cdecl GameObjectManager::getInstance(void)" (?getInstance@GameObjectManager@@SAPAV1@XZ)
+Game.obj : error LNK2001: unresolved external symbol "public: void __thiscall GameScene::activateScene(void)" (?activateScene@GameScene@@QAEXXZ)
+Game.obj : error LNK2001: unresolved external symbol "public: void __thiscall GameScene::loadScene(void)" (?loadScene@GameScene@@QAEXXZ)
+Game.obj : error LNK2001: unresolved external symbol "public: __thiscall GameScene::GameScene(class std::vector<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::allocator<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > > >,class ThreadPool *)" (??0GameScene@@QAE@V?$vector@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@V?$allocator@V?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@@std@@PAVThreadPool@@@Z)
+Game.obj : error LNK2001: unresolved external symbol "public: void __thiscall GameObject::initialize(struct glm::vec<3,float,0>,float)" (?initialize@GameObject@@QAEXU?$vec@$02M$0A@@glm@@M@Z)
+Game.obj : error LNK2001: unresolved external symbol "public: void __thiscall GameObject::getMesh(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >)" (?getMesh@GameObject@@QAEXV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
+Game.obj : error LNK2001: unresolved external symbol "public: __thiscall GameObject::GameObject(void)" (??0GameObject@@QAE@XZ)
+C:\Users\janca\Documents\GDPARCM x GDNETWK\p3\GDPARCM-p3\P3\Release\P3.exe : fatal error LNK1120: 11 unresolved externals

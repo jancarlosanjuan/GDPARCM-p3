@@ -12,7 +12,7 @@ public:
 	GLuint createShaderProgram();
 	GLuint createShadowlessShaderProgram();
 	GLuint createSkyboxShaderProgram();
-	
+	GLuint createScreenShaderProgram();
 private:
 	ShaderProgram();
 	ShaderProgram(ShaderProgram const&) {};             // copy constructor is private

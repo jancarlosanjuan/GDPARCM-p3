@@ -1,10 +1,13 @@
 #pragma once
 
+
+
 #include <string>
 #include <vector>
 
 class GameScene;
 class ThreadPool;
+class GLFWwindow;
 class Game
 {
 public:
@@ -12,12 +15,14 @@ public:
 	~Game();
 
 	void Run();
-
+	void DisplayIMGUIwindow(int index, std::string windowName);
 private:
-	void init();
+	void init(GLFWwindow* window);
 	void display();
 
 	void calculateLighting();
+
+	bool hasOtherSceneOpen(int index);
 
 	int const SCENECOUNT = 5;
 
@@ -37,5 +42,7 @@ private:
 	std::string tubFile = basepath + "Final_Objects/Tub.obj";
 
 	std::vector<GameScene*> scenes;
+	std::vector<bool> openScenes;
+	
 	ThreadPool* pool;
 };
