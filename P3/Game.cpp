@@ -1,3 +1,8 @@
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
+
 #include "Game.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -50,6 +55,26 @@ unsigned int depthMapFBO;
 unsigned int depthMap;
 glm::vec3 lightPos(-200.0f, 200.0f, 200.0f);
 
+//for testing
+float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+	   // positions   // texCoords
+	   -1.0f,  1.0f,  0.0f, 1.0f,
+	   -1.0f, -1.0f,  0.0f, 0.0f,
+		1.0f, -1.0f,  1.0f, 0.0f,
+
+	   -1.0f,  1.0f,  0.0f, 1.0f,
+		1.0f, -1.0f,  1.0f, 0.0f,
+		1.0f,  1.0f,  1.0f, 1.0f
+};
+unsigned int quadVAO, quadVBO;
+GLuint screenShaderProgram;
+//Frame Buffer Object **1
+unsigned int framebuffer;
+unsigned int textureColorbuffer;
+unsigned int rbo;
+float loadingBar;
+bool openedWindow = false;
+
 Game::Game()
 {
 	pool = new ThreadPool("Thread Pool", 10);
@@ -60,10 +85,19 @@ Game::~Game()
 {
 }
 
-void Game::init()
+void Game::init(GLFWwindow* window)
 {
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+
+	
 	*GameObjectManager::getInstance()->getRenderingProgram() = ShaderProgram::getInstance()->createShaderProgram();
-	*GameObjectManager::getInstance()->getSkyboxRenderingProgram() = ShaderProgram::getInstance()->createSkyboxShaderProgram();
+//	*GameObjectManager::getInstance()->getSkyboxRenderingProgram() = ShaderProgram::getInstance()->createSkyboxShaderProgram();
 
 	glEnable(GL_DEPTH_TEST);
 	srand(time(NULL));
@@ -72,6 +106,7 @@ void Game::init()
 	models.push_back(houseFile);
 	models.push_back(treeTrunkFile);
 	models.push_back(leavesFile);
+	/*
 	models.push_back(toiletFile);
 	models.push_back(fallenFile);
 	models.push_back(grassFile);
@@ -81,17 +116,20 @@ void Game::init()
 	models.push_back(showerFile);
 	models.push_back(showerCaddyFile);
 	models.push_back(tubFile);
-	for (int i = 0; i < SCENECOUNT; i++) {
+	*/
+	for (int i = 0; i < SCENECOUNT; i++) {//SCENECOUNT
 		GameScene* scene = new GameScene(models, pool);
 		scenes.push_back(scene);
 		scene->loadScene();
 	}
 
+	/*
 	GameObject* ground = new GameObject();
 	ground->getMesh(groundFile);
 	ground->initialize(vec3(-50.0f, 0, 0), 0);
 	GameObjectManager::getInstance()->addGameObject(ground);
-
+	*/
+	
 	glGenFramebuffers(1, &depthMapFBO);
 
 	glGenTextures(1, &depthMap);
@@ -103,6 +141,9 @@ void Game::init()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	
+
+
 
 	// attach depth texture as FBO's depth buffer
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -112,15 +153,82 @@ void Game::init()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glUniform1i(glGetUniformLocation(*GameObjectManager::getInstance()->getRenderingProgram(), "u_shadowMap"), 0);
+	
+
+	//create FBO
+	//testing delete later
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+		//Frame Buffer Object Init **2
+	screenShaderProgram = ShaderProgram::getInstance()->createScreenShaderProgram();
+	GLuint idk = glGetUniformLocation(screenShaderProgram, "screenTexture");
+	glUniform1i(idk, 0);
+	//configuration time
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);//GL_FRAMEBUFFER
+	// create a color attachment texture
+	glGenTextures(1, &textureColorbuffer);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);//GL_FRAMEBUFFER
+	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+
+//	DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+//	glDrawBuffers(1, DrawBuffers);
+	//	
+	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		cout << "ERRORRRRRRRRRRRRRRRRRRRRRRRRR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+		exit(69);
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	// draw as wireframe
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	
 }
+
 
 void Game::display() 
 {
+
+	
+	
+
+	
 	calculateLighting();
 
-	for (int i = 0; i < scenes.size(); i++) {
+	/*for (int i = 0; i < scenes.size(); i++) {
 		scenes[i]->activateScene();
-	}
+	}*/
+
+
+	//Framebuffer **3
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.1f, 1.1f, 0.1f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	
 	glm::mat4 projectionMatrix;
 	projectionMatrix = glm::perspective(glm::radians(fov), (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
@@ -138,6 +246,56 @@ void Game::display()
 	//skybox->Draw(viewMatrix, projectionMatrix);
 	
 	glBindVertexArray(0);
+
+
+	//RENDER THE FINAL FBO TO A SCREEN
+	
+
+	// Framebuffer **4
+	//uncomment for blit
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClearColor(0.0f, 0.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+	glDisable(GL_DEPTH_TEST);//delete me i think
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	/*
+	//draw the rectangle on screen
+	glUseProgram(screenShaderProgram);
+//	glUseProgram(*GameObjectManager::getInstance()->getRenderingProgram());
+	//uncomment to see background
+	glBindVertexArray(quadVAO);
+//	glBindTexture(GL_TEXTURE_2D, framebuffer);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);//textureColorbuffer
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	*/
+
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("MAIN WINDOW");
+	{
+		
+		for(int i = 0; i<scenes.size() ; ++i)
+		{
+			this->DisplayIMGUIwindow(i , std::to_string(i));
+		}
+		
+		
+		
+
+		
+		
+	}
+	ImGui::End();
+
+	
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	
 }
 
 void Game::calculateLighting()
@@ -266,11 +424,11 @@ void Game::Run()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
 
-	init();
+	init(window);
 	
 	while (!glfwWindowShouldClose(window)) {
 		float currentFrame = glfwGetTime();
@@ -281,8 +439,63 @@ void Game::Run()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	
+
+	//destroy imgui functions
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
+}
+
+void Game::DisplayIMGUIwindow(int index, std::string windowName)
+{
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ImGui::Begin(windowName.c_str());
+//	ImGui::Text("SOME TEXT 2");
+	float store = scenes[index]->getLoadProgress();
+	bool someBool = scenes[index]->someBool;
+
+	if(ImGui::Button("Open Viewport"))
+	{
+		scenes[index]->someBool = !someBool;
+	}
+
+	if(someBool)
+	{
+		if (ImGui::CollapsingHeader("CollapsingHeader") && (int)store == 1)
+		{
+			openedWindow = true;
+			scenes[index]->activateScene();
+			for(int i = 0 ; i<scenes.size() ; ++i)
+			{
+				if(i != index)
+				{
+					scenes[index]->deactivateScene();
+				}
+			}
+			ImGui::GetWindowDrawList()->AddImage(
+				(void*)textureColorbuffer,
+				ImVec2(ImGui::GetCursorScreenPos()),
+				ImVec2(ImGui::GetCursorScreenPos().x + WIDTH / 2,
+					ImGui::GetCursorScreenPos().y + HEIGHT / 2), ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::SetWindowSize({ 250,250 });
+		}
+		else
+		{
+			openedWindow = false;
+			scenes[index]->deactivateScene();
+			ImGui::SetWindowSize({ 250,150 });
+		}
+	}
+	
+
+
+
+	ImGui::SliderFloat("float", &store, 0.0f, 1.0f);
+	ImGui::End();
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

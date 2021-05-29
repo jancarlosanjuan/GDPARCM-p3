@@ -1,10 +1,13 @@
 #pragma once
 
+
+
 #include <string>
 #include <vector>
 
 class GameScene;
 class ThreadPool;
+class GLFWwindow;
 class Game
 {
 public:
@@ -12,9 +15,9 @@ public:
 	~Game();
 
 	void Run();
-
+	void DisplayIMGUIwindow(int index, std::string windowName);
 private:
-	void init();
+	void init(GLFWwindow* window);
 	void display();
 
 	void calculateLighting();

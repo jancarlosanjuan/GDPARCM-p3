@@ -21,6 +21,8 @@ public:
 	
 	void OnFinishedExecution() override;
 
+	bool someBool = false;
+
 private:
 	std::vector<GameObject*> gameObjects;
 	std::vector<std::string> modelPaths;
@@ -29,6 +31,7 @@ private:
 	bool initializedObjects = false;
 	bool displayingObjects = false;
 
+	
 	ThreadPool* pool;
 };
 

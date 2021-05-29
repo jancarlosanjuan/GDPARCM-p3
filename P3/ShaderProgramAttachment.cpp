@@ -3,6 +3,7 @@
 #include <glfw/glfw3.h>
 #include <iostream>
 
+
 ShaderProgram* ShaderProgram::sharedInstance = nullptr;
 
 ShaderProgram* ShaderProgram::getInstance()
@@ -100,6 +101,40 @@ GLuint ShaderProgram::createSkyboxShaderProgram()
 	glLinkProgram(vfProgram);
 
 	return vfProgram;
+}
+
+GLuint ShaderProgram::createScreenShaderProgram()
+{
+
+	//skybox
+	GLuint framevShader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint framefShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	//skybox
+	std::string framevertShaderStr = readShaderSource("framevertShader.glsl");
+	std::string framefragShaderStr = readShaderSource("framefragShader.glsl");
+
+	//skybox
+	const char* framevertShaderSrc = framevertShaderStr.c_str();
+	const char* framefragShaderSrc = framefragShaderStr.c_str();
+
+	//skybox
+	glShaderSource(framevShader, 1, &framevertShaderSrc, NULL);
+	glShaderSource(framefShader, 1, &framefragShaderSrc, NULL);
+
+	glCompileShader(framevShader);
+	glCompileShader(framefShader);
+
+	GLuint framevfProgram = glCreateProgram();
+	glAttachShader(framevfProgram, framevShader);
+	glAttachShader(framevfProgram, framefShader);
+	glLinkProgram(framevfProgram);
+
+	return framevfProgram;
+
+
+
+	
 }
 
 ShaderProgram::ShaderProgram()
