@@ -274,14 +274,30 @@ void Game::display()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("MAIN WINDOW");
+	if(this->viewAllPressed)
+	{
+		ImGui::Begin("VIEW ALL WINDOW");
+
+		
+		ImGui::GetWindowDrawList()->AddImage(
+			(void*)textureColorbuffer,
+			ImVec2(ImGui::GetCursorScreenPos()),
+			ImVec2(ImGui::GetCursorScreenPos().x + WIDTH / 2,
+				ImGui::GetCursorScreenPos().y + HEIGHT / 2), ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::SetWindowSize({ 500,500 });
+
+		
+		ImGui::End();
+	}
+
+	
 	{
 		for(int i = 0; i<scenes.size() ; ++i)
 		{
 			this->DisplayIMGUIwindow(i , std::to_string(i));
 		}
 	}
-	ImGui::End();
+	
 
 	
 	ImGui::Render();
@@ -340,6 +356,20 @@ bool Game::hasOtherSceneOpen(int index)
 	}
 	return false;
 }
+
+bool Game::checkAllIfLoaded()
+{
+	for(int i = 0 ; i<scenes.size() ; i++)
+	{
+		if((int) scenes[i]->getLoadProgress() != 1)
+		{
+			return false;
+		}
+	}
+//	std::cout << "Returning true\n";
+	return true;
+}
+
 
 void translateInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
@@ -457,33 +487,165 @@ void Game::Run()
 
 void Game::DisplayIMGUIwindow(int index, std::string windowName)
 {
+	static bool viewall = false;
+	this->viewAllPressed = viewall;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ImGui::Begin(windowName.c_str());
 	//	ImGui::Text("SOME TEXT 2");
 	float store = scenes[index]->getLoadProgress();
 
-	if (ImGui::CollapsingHeader("CollapsingHeader") && (int)store == 1 && !hasOtherSceneOpen(index))
+	/*if(this->viewAllPressed)
 	{
-		if (!openScenes[index]) {
-			openScenes[index] = true;
-			scenes[index]->activateScene();
-		}
-		ImGui::GetWindowDrawList()->AddImage(
-			(void*)textureColorbuffer,
-			ImVec2(ImGui::GetCursorScreenPos()),
-			ImVec2(ImGui::GetCursorScreenPos().x + WIDTH / 2,
-				ImGui::GetCursorScreenPos().y + HEIGHT / 2), ImVec2(0, 1), ImVec2(1, 0));
-		ImGui::SetWindowSize({ 250,250 });
+		std::cout << "VIEW ALL\n";
 	}
 	else
 	{
-		if (openScenes[index]) {
-			openScenes[index] = false;
-			scenes[index]->deactivateScene();
-		}
-		ImGui::SetWindowSize({ 250,150 });
-	}
+		std::cout << "dont view all XD\n";
+	}*/
 
+	if(!this->viewAllPressed)
+	{
+		if (ImGui::CollapsingHeader("CollapsingHeader") && (int)store == 1 && !hasOtherSceneOpen(index))
+		{
+
+			if (!openScenes[index]) {
+				openScenes[index] = true;
+				scenes[index]->activateScene();
+			}
+			ImGui::GetWindowDrawList()->AddImage(
+				(void*)textureColorbuffer,
+				ImVec2(ImGui::GetCursorScreenPos()),
+				ImVec2(ImGui::GetCursorScreenPos().x + WIDTH / 2,
+					ImGui::GetCursorScreenPos().y + HEIGHT / 2), ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::SetWindowSize({ 500,500 });
+
+		}
+		else
+		{
+			/*if (this->viewAllPressed)
+			{
+				this->viewAllPressed = false;
+				for (int i = 0; i < scenes.size(); i++)
+				{
+					scenes[i]->allButtonPressed = false;
+					openScenes[i] = false;
+					scenes[i]->deactivateScene();
+				}
+				ImGui::SetWindowSize({ 250,150 });
+
+			}*/
+			if (openScenes[index]) {
+				openScenes[index] = false;
+				scenes[index]->deactivateScene();
+			}
+			ImGui::SetWindowSize({ 250,150 });
+
+		}
+	}
+	
+
+	if((int)store == 1 && !this->viewAllPressed)
+	{
+		if (ImGui::Button("Unload Scene"))
+		{
+			scenes[index]->unloadScene();
+		}
+	}
+	if((int)store != 1 && !this->viewAllPressed)
+	{
+		if (ImGui::Button("Load Scene"))
+		{
+
+			std::vector<std::string> models;
+			models.push_back(roomFile);
+			models.push_back(towelFile);
+			models.push_back(showerFile);
+			models.push_back(showerCaddyFile);
+
+			GameScene* scene = new GameScene(models, pool);
+			scenes[index] = scene;
+			openScenes[index] = false;
+			scene->loadScene();
+		}
+	}
+	
+
+	if(checkAllIfLoaded())
+	{
+		
+		static int clicked = 0;
+		std::string viewAllstring;
+		if(!this->viewAllPressed)
+		{
+			viewAllstring = "View All";
+		}
+		else
+		{
+			viewAllstring = "Cancel View All";
+		}
+		
+		if (ImGui::Button(viewAllstring.c_str()))
+		{
+			clicked++;
+			
+			/*
+			else
+			{
+				for (int i = 0; i < scenes.size(); i++)
+				{
+					scenes[i]->allButtonPressed = false;
+					openScenes[i] = false;
+					scenes[i]->deactivateScene();
+				}
+				ImGui::SetWindowSize({ 250,150 });
+			}
+			*/
+
+			if (clicked & 1)
+			{
+
+				std::cout << this->viewAllPressed << "\n";
+				std::cout << "pressed view all \n";
+				scenes[index]->allButtonPressed = !scenes[index]->allButtonPressed;
+				viewall = true;
+				//this->viewAllPressed = true;
+				std::cout << this->viewAllPressed << "\n";
+
+
+				for (int i = 0; i < scenes.size(); i++)
+				{
+
+					openScenes[i] = true;
+					scenes[i]->activateScene();
+				}
+
+
+				
+			}
+
+			else
+			{
+				std::cout << this->viewAllPressed << "\n";
+				std::cout << "pressed view all \n";
+				scenes[index]->allButtonPressed = !scenes[index]->allButtonPressed;
+				//this->viewAllPressed = false;
+				viewall = false;
+				std::cout << this->viewAllPressed << "\n";
+
+				for (int i = 0; i < scenes.size(); i++)
+				{
+					scenes[i]->allButtonPressed = false;
+					openScenes[i] = false;
+					scenes[i]->deactivateScene();
+				}
+				
+			}
+		}
+		
+	}
+	
+	
+	
 	ImGui::SliderFloat("float", &store, 0.0f, 1.0f);
 	ImGui::End();
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////

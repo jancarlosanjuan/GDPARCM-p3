@@ -21,6 +21,8 @@ public:
 	void showObjects();
 	
 	void OnFinishedExecution() override;
+
+	bool allButtonPressed = false;
 private:
 	std::vector<GameObject*> gameObjects;
 	std::vector<std::string> modelPaths;

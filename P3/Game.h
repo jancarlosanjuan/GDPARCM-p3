@@ -23,6 +23,7 @@ private:
 	void calculateLighting();
 
 	bool hasOtherSceneOpen(int index);
+	bool checkAllIfLoaded();
 
 	int const SCENECOUNT = 5;
 
@@ -45,4 +46,6 @@ private:
 	std::vector<bool> openScenes;
 	
 	ThreadPool* pool;
+	inline static bool viewAllPressed = false;
+	
 };
