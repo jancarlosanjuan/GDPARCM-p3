@@ -14,10 +14,13 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <time.h>
+#include <algorithm>
 
 #include "GameObjectManager.h"
 #include "GameScene.h"
 #include "ThreadPool.h"
+
+#include <random>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -28,8 +31,8 @@
 using namespace std;
 using namespace glm;
 
-#define WIDTH 1024
-#define HEIGHT 768
+#define WIDTH 1280
+#define HEIGHT 960
 
 vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
 
@@ -73,6 +76,18 @@ unsigned int textureColorbuffer;
 unsigned int rbo;
 float loadingBar;
 
+
+
+std::random_device randomDevice;
+std::mt19937 engine(randomDevice());
+
+int getRandomNumberInRange(int min, int max, std::mt19937& engineReference)
+{
+	std::uniform_int_distribution<int> distribution(min, max);
+	return distribution(engineReference);
+}
+
+
 Game::Game()
 {
 	pool = new ThreadPool("Thread Pool", 10);
@@ -81,6 +96,24 @@ Game::Game()
 
 Game::~Game()
 {
+}
+
+std::vector<std::string> Game::getRandomModels()
+{
+	int modelCount = getRandomNumberInRange(3, this->models.size(), engine);
+	std::vector<std::string> returnVector;
+	for(auto &s : this->models)
+	{
+		std::string store = s;
+		returnVector.emplace_back(store);
+	}
+
+	auto rng = std::default_random_engine{};
+	std::shuffle(std::begin(returnVector), std::end(returnVector), rng);
+
+	returnVector.resize(modelCount);
+	
+	return returnVector;
 }
 
 void Game::init(GLFWwindow* window)
@@ -100,11 +133,11 @@ void Game::init(GLFWwindow* window)
 	glEnable(GL_DEPTH_TEST);
 	srand(time(NULL));
 
-	std::vector<std::string> models;
+	
 	models.push_back(houseFile);
 	models.push_back(treeTrunkFile);
 	models.push_back(leavesFile);
-	/*
+	
 	models.push_back(toiletFile);
 	models.push_back(fallenFile);
 	models.push_back(grassFile);
@@ -114,9 +147,9 @@ void Game::init(GLFWwindow* window)
 	models.push_back(showerFile);
 	models.push_back(showerCaddyFile);
 	models.push_back(tubFile);
-	*/
+
 	for (int i = 0; i < SCENECOUNT; i++) {//SCENECOUNT
-		GameScene* scene = new GameScene(models, pool);
+		GameScene* scene = new GameScene(this->getRandomModels(), pool);
 		scenes.push_back(scene);
 		openScenes.push_back(false);
 		scene->loadScene();
@@ -274,6 +307,12 @@ void Game::display()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	ImGui::Begin("FPS stats");
+	{
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	}
+	ImGui::End();
+	
 	if(this->viewAllPressed)
 	{
 		ImGui::Begin("VIEW ALL WINDOW");
@@ -369,6 +408,8 @@ bool Game::checkAllIfLoaded()
 //	std::cout << "Returning true\n";
 	return true;
 }
+
+
 
 
 void translateInput(GLFWwindow* window) {
@@ -505,7 +546,7 @@ void Game::DisplayIMGUIwindow(int index, std::string windowName)
 
 	if(!this->viewAllPressed)
 	{
-		if (ImGui::CollapsingHeader("CollapsingHeader") && (int)store == 1 && !hasOtherSceneOpen(index))
+		if (ImGui::CollapsingHeader("Viewport") && (int)store == 1 && !hasOtherSceneOpen(index))
 		{
 
 			if (!openScenes[index]) {
@@ -555,14 +596,7 @@ void Game::DisplayIMGUIwindow(int index, std::string windowName)
 	{
 		if (ImGui::Button("Load Scene"))
 		{
-
-			std::vector<std::string> models;
-			models.push_back(roomFile);
-			models.push_back(towelFile);
-			models.push_back(showerFile);
-			models.push_back(showerCaddyFile);
-
-			GameScene* scene = new GameScene(models, pool);
+			GameScene* scene = new GameScene(this->getRandomModels(), pool);
 			scenes[index] = scene;
 			openScenes[index] = false;
 			scene->loadScene();
@@ -646,7 +680,7 @@ void Game::DisplayIMGUIwindow(int index, std::string windowName)
 	
 	
 	
-	ImGui::SliderFloat("float", &store, 0.0f, 1.0f);
+	ImGui::SliderFloat("Loading Bar", &store, 0.0f, 1.0f);
 	ImGui::End();
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

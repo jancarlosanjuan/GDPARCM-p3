@@ -44,6 +44,9 @@ private:
 
 	std::vector<GameScene*> scenes;
 	std::vector<bool> openScenes;
+
+	std::vector<std::string> getRandomModels();
+	std::vector<std::string> models;
 	
 	ThreadPool* pool;
 	inline static bool viewAllPressed = false;
