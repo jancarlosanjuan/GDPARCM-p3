@@ -66,6 +66,18 @@ void GameScene::unloadScene()
 		loadedObjectsNum = 0;
 		displayingObjects = false;
 	}
+	else if (loadedObjectsNum == modelPaths.size())
+	{
+		for (int i = 0; i < gameObjects.size(); i++)
+		{
+			delete gameObjects[i];
+		}
+		gameObjects.clear();
+
+		initializedObjects = false;
+		loadedObjectsNum = 0;
+		displayingObjects = false;
+	}
 }
 
 float GameScene::getLoadProgress()
