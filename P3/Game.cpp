@@ -309,7 +309,16 @@ void Game::display()
 
 	ImGui::Begin("FPS stats");
 	{
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		static float countdown = 0.f;
+		countdown -= deltaTime;
+		static float fps;
+		if(countdown <= 0)
+		{
+			countdown = 0.5f;
+			fps = 1 / deltaTime;
+		}
+		ImGui::Text("FPS:  %.3f", fps );
 	}
 	ImGui::End();
 	
@@ -506,13 +515,32 @@ void Game::Run()
 	init(window);
 	
 	while (!glfwWindowShouldClose(window)) {
+		/*
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		processInput(window);
-		display();
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		*/
+
+		
+		float currentFrame = glfwGetTime();
+		deltaTime += currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		if (deltaTime >= 1.f / 60.f)
+		{
+			
+			processInput(window);
+
+			processInput(window);
+			display();
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+			deltaTime -= 1.f / 60.f;
+			//deltaTime = 0.0f;
+		}
+		
+		
+		
+		
 	}
 	
 
